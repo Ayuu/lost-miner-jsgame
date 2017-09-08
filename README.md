@@ -1,2 +1,2 @@
 # lost-miner-jsgame
-first project for js13kgames.com on the lost theme
+A miner fell into a hole... he need to find keys to get back up to the surface by breaking every crates he finds.

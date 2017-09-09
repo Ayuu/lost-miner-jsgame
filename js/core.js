@@ -33,6 +33,7 @@ function keyup(e) {
     case KEY.D:
     case KEY.RIGHT:
       accelerateXY(0);
+      break;
     case KEY.S:
     case KEY.DOWN:
     case KEY.Z:
@@ -40,6 +41,7 @@ function keyup(e) {
     case KEY.UP:
     case KEY.SPACE:
       accelerateZ(0.05);
+      break;
   }
 }
 
@@ -118,7 +120,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
       var bottom = myGameArea.canvas.height - this.height;
       var right = myGameArea.canvas.width - this.width;
       if (this.y <= 0) {
-        this.y = top;
+        this.y = 0;
         this.gravitySpeed = 0;
       } else if (this.y >= bottom) {
         this.y = bottom;

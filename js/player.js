@@ -5,6 +5,12 @@ class Player extends ObjectComponent {
     this.speedY = 0;
     this.container = props.container;
     this.dead = false;
+    this.headSize = this.height * 0.1;
+    this.headMargin = this.headSize * 2;
+    this.bodySize = this.height * 0.5;
+    this.memberSize = this.height * 0.2;
+    this.memberWidth = this.width * 0.15;
+    this.updateBodyPos();
   }
 
   move(x, y) {
@@ -12,15 +18,22 @@ class Player extends ObjectComponent {
     this.speedY = defaults(y, this.speedY);
   }
 
-  newPos(wall) {
+  updateBodyPos() {
+    this.centerX = this.x + this.halfWidth;
+    this.centerY = this.y + this.halfHeight;
+    this.leftX = this.centerX - this.memberWidth;
+    this.rightX = this.centerX + this.memberWidth;
+  }
+
+  newPos(walls) {
     this.x += this.speedX;
     this.y += this.speedY;
-    this.centerX = this.x + this.width * 0.5;
-    this.centerY = this.y + this.height * 0.5;
-    wall.forEach(w => {
-      this.crashWith(w);
-    });
+    // temporary updating body pos to check collision
+    this.updateBodyPos();
+    walls.forEach(wall => this.crashWith(wall));
     this.hitContainer();
+    // final update for body pos after collision check
+    this.updateBodyPos();
   }
 
   hitContainer() {
@@ -31,7 +44,7 @@ class Player extends ObjectComponent {
     if (this.x <= 0) this.x = 0;
     else if (this.x >= right) this.x = right;
   }
-  
+
   crashWith(o) {
     const w = 0.5 * (this.width + o.width);
     const h = 0.5 * (this.height + o.height);
@@ -52,4 +65,35 @@ class Player extends ObjectComponent {
   }
 
   isDead() { return this.dead; }
+
+  update() {
+    this.ctx.strokeStyle = "#000"; // blue
+    this.ctx.fillStyle = "#000"; // #ffe4c4
+
+    this.ctx.beginPath();
+    this.ctx.arc(this.centerX, this.y + this.headSize, this.headSize, 0, Math.PI * 2, true);
+    this.ctx.fill();
+
+    // body
+    this.ctx.beginPath();
+    this.ctx.moveTo(this.centerX, this.y + this.headMargin);
+    this.ctx.lineTo(this.centerX, this.y + this.headMargin + this.bodySize);
+    this.ctx.stroke();
+
+    // arms
+    this.ctx.beginPath();
+    this.ctx.moveTo(this.centerX, this.y + this.headMargin);
+    this.ctx.lineTo(this.leftX, this.y + this.headMargin + this.memberSize);
+    this.ctx.moveTo(this.centerX, this.y + this.headMargin);
+    this.ctx.lineTo(this.rightX, this.y + this.headMargin + this.memberSize);
+    this.ctx.stroke();
+
+    // legs
+    this.ctx.beginPath();
+    this.ctx.moveTo(this.centerX, this.y + this.headMargin + this.bodySize);
+    this.ctx.lineTo(this.leftX, this.y + this.height);
+    this.ctx.moveTo(this.centerX, this.y + this.headMargin + this.bodySize);
+    this.ctx.lineTo(this.rightX, this.y + this.height);
+    this.ctx.stroke();
+  }
 }

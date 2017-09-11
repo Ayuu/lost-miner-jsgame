@@ -43,7 +43,7 @@ function updateGameArea() {
   }
   container.clear();
   container.frameNo += 1;
-  
+
   score.text = `SCORE: ${container.frameNo}`;
   score.update();
 
@@ -131,7 +131,7 @@ document.addEventListener("DOMContentLoaded", function () {
         width: 600,
         height: 2,
         x: 0,
-        y: MAX_HEIGHT - 42,
+        y: MAX_HEIGHT - 40,
         container,
       }));
 

@@ -23,8 +23,10 @@ class ObjectComponent extends AbstractComponent {
 
     this.width = props.width;
     this.height = props.height;
-    this.centerX = this.x + this.width * 0.5;
-    this.centerY = this.y + this.height * 0.5;
+    this.halfWidth = this.width * 0.5;
+    this.halfHeight = this.height * 0.5;
+    this.centerX = this.x + this.halfWidth;
+    this.centerY = this.y + this.halfHeight;
     this.sizeY = this.y + this.height;
     this.sizeX = this.x + this.width;
   }

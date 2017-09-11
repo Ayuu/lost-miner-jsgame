@@ -3,6 +3,7 @@ var myGamePiece;
 var myObstacles = [];
 var myScore;
 var metaPressed = false;
+var gameStarted = false;
 
 var KEY = {
   Z: 90,
@@ -21,6 +22,7 @@ var KEY = {
   SHIFT: 16,
   ALT: 18,
   ESC: 27,
+  META: 91,
 };
 
 function component(width, height, color, x, y, type) {
@@ -116,6 +118,7 @@ function startGame() {
   myGamePiece.gravity = 0.05;
   myScore = new component("30px", "Consolas", "black", 280, 40, "text");
   container.start();
+  gameStarted = true;
 }
 
 function accelerateXY(n) {
@@ -128,68 +131,77 @@ function accelerateZ(n) {
 
 function keyup(e) {
   var code = e.keyCode;
-  if (metaPressed) {
-    return;
-  }
-
-  switch (code) {
-    case KEY.Q:
-    case KEY.A:
-    case KEY.LEFT:
-    case KEY.D:
-    case KEY.RIGHT:
-      accelerateXY(0);
-      break;
-    case KEY.S:
-    case KEY.DOWN:
-    case KEY.Z:
-    case KEY.W:
-    case KEY.UP:
-    case KEY.SPACE:
-      accelerateZ(0.05);
-      break;
-    case KEY.R:
+  if (code === KEY.R) {
+    if (!metaPressed) {
       startGame();
-      break;
-    case KEY.CTRL:
-    case KEY.SHIFT:
-    case KEY.ALT:
-    case KEY.ESC:
-      metaPressed = false;
-      break;
+    }
+  } else {
+    if (gameStarted) {
+      switch (code) {
+        case KEY.Q:
+        case KEY.A:
+        case KEY.LEFT:
+        case KEY.D:
+        case KEY.RIGHT:
+          accelerateXY(0);
+          break;
+        case KEY.S:
+        case KEY.DOWN:
+        case KEY.Z:
+        case KEY.W:
+        case KEY.UP:
+        case KEY.SPACE:
+          accelerateZ(0.05);
+          break;
+        case KEY.CTRL:
+        case KEY.SHIFT:
+        case KEY.ALT:
+        case KEY.ESC:
+        case KEY.META:
+          metaPressed = false;
+          break;
+      }
+    }
   }
 }
 
 function keydown(e) {
   var code = e.keyCode;
-  switch (code) {
-    case KEY.Q:
-    case KEY.A:
-    case KEY.LEFT:
-      accelerateXY(-4);
-      break;
-    case KEY.Z:
-    case KEY.W:
-    case KEY.UP:
-      accelerateZ(-0.2);
-      break;
-    case KEY.D:
-    case KEY.RIGHT:
-      accelerateXY(4);
-      break;
-    case KEY.S:
-    case KEY.DOWN:
-      accelerateZ(0.2);
-      break;
-    case KEY.SPACE:
-      accelerateZ(-0.2);
-      break;
-    case KEY.CTRL:
-    case KEY.SHIFT:
-    case KEY.ALT:
-    case KEY.ESC:
-      metaPressed = true;
-      break;
+  if (code === KEY.R) {
+    startGame();
+  } else {
+    if (gameStarted) {
+      switch (code) {
+        case KEY.Q:
+        case KEY.A:
+        case KEY.LEFT:
+          accelerateXY(-4);
+          break;
+        case KEY.Z:
+        case KEY.W:
+        case KEY.UP:
+          accelerateZ(-0.2);
+          break;
+        case KEY.D:
+        case KEY.RIGHT:
+          accelerateXY(4);
+          break;
+        case KEY.S:
+        case KEY.DOWN:
+          accelerateZ(0.2);
+          break;
+        case KEY.SPACE:
+          accelerateZ(-0.2);
+          break;
+        case KEY.CTRL:
+        case KEY.SHIFT:
+        case KEY.ALT:
+        case KEY.ESC:
+        case KEY.META:
+          metaPressed = true;
+          break;
+      }
+    }
   }
 }
 

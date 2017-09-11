@@ -4,12 +4,12 @@ const MAX_WIDTH = 600;
 var container;
 var player;
 var score;
-var ctrlPressed = false;
+var metaPressed = false;
 var gameStarted = false;
 var gameOver = false;
-var permanentWall = [];
+const permanentWall = [];
 
-var KEY = {
+const KEY = {
   Z: 90,
   Q: 81,
   W: 87,
@@ -28,13 +28,15 @@ var KEY = {
   ESC: 27,
   TAB: 9,
   E: 69,
+  META: 91,
 };
 
-var KEY_UP = [KEY.UP, KEY.W, KEY.Z, KEY.SPACE];
-var KEY_DOWN = [KEY.DOWN, KEY.S];
-var KEY_LEFT = [KEY.LEFT, KEY.A, KEY.Q];
-var KEY_RIGHT = [KEY.RIGHT, KEY.D];
-var KEY_ACTION = [KEY.E];
+const KEY_UP = [KEY.UP, KEY.W, KEY.Z, KEY.SPACE];
+const KEY_DOWN = [KEY.DOWN, KEY.S];
+const KEY_LEFT = [KEY.LEFT, KEY.A, KEY.Q];
+const KEY_RIGHT = [KEY.RIGHT, KEY.D];
+const KEY_ACTION = [KEY.E];
+const META_KEY = [KEY.META, KEY.CTRL];
 
 function updateGameArea() {
   if (player.isDead()) {
@@ -58,9 +60,9 @@ function startGame() {
 }
 
 function keyup({ keyCode: code }) {
-  if (ctrlPressed) {
-    if (code === KEY.CTRL) {
-      ctrlPressed = false;
+  if (metaPressed) {
+    if (META_KEY.includes(code)) {
+      metaPressed = false;
     }
     return;
   }
@@ -70,12 +72,17 @@ function keyup({ keyCode: code }) {
     } else if (KEY_LEFT.includes(code) || KEY_RIGHT.includes(code)) {
       player.move(0);
     }
+  } else {
+    if (code === KEY.R) {
+      startGame();
+    }
   }
 }
 
 function keydown({ keyCode: code }) {
-  if (code === KEY.R) {
-    startGame();
+  if (META_KEY.includes(code)) {
+    metaPressed = true;
+    return;
   } else {
     if (gameStarted) {
       if (KEY_UP.includes(code)) {
@@ -90,8 +97,6 @@ function keydown({ keyCode: code }) {
     }
   }
 }
-
-// 12, 20
 
 function generateWall(container) {
   const height = 30;

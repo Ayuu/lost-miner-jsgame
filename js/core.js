@@ -64,17 +64,13 @@ function keyup({ keyCode: code }) {
     if (META_KEY.includes(code)) {
       metaPressed = false;
     }
-    return;
-  }
-  if (gameStarted) {
+  } else if (code === KEY.R) {
+    startGame();
+  } else if (gameStarted) {
     if (KEY_UP.includes(code) || KEY_DOWN.includes(code)) {
       player.move(undefined, 0);
     } else if (KEY_LEFT.includes(code) || KEY_RIGHT.includes(code)) {
       player.move(0);
-    }
-  } else {
-    if (code === KEY.R) {
-      startGame();
     }
   }
 }
@@ -83,17 +79,16 @@ function keydown({ keyCode: code }) {
   if (META_KEY.includes(code)) {
     metaPressed = true;
     return;
-  } else {
-    if (gameStarted) {
-      if (KEY_UP.includes(code)) {
-        player.move(undefined, -5);
-      } else if (KEY_DOWN.includes(code)) {
-        player.move(undefined, 5);
-      } else if (KEY_LEFT.includes(code)) {
-        player.move(-5);
-      } else if (KEY_RIGHT.includes(code)) {
-        player.move(5);
-      }
+  }
+  if (gameStarted) {
+    if (KEY_UP.includes(code)) {
+      player.move(undefined, -5);
+    } else if (KEY_DOWN.includes(code)) {
+      player.move(undefined, 5);
+    } else if (KEY_LEFT.includes(code)) {
+      player.move(-5);
+    } else if (KEY_RIGHT.includes(code)) {
+      player.move(5);
     }
   }
 }

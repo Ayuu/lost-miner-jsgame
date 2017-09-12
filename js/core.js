@@ -121,7 +121,6 @@ function generateLevel() {
   freeWalk.length = 0;
 
   maze.startGenerate(new Difficulty(player ? player.progress : 0));
-  console.log(maze.map);
   maze.map.forEach(({ x, y, type }) => {
     switch(type) {
       case TILE_TYPE.WALL:

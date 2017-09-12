@@ -21,7 +21,6 @@ const KEY = {
   RIGHT: 39,
   DOWN: 40,
   SPACE: 32,
-  R: 82,
   CTRL: 17,
   SHIFT: 16,
   ALT: 18,
@@ -29,6 +28,7 @@ const KEY = {
   TAB: 9,
   E: 69,
   META: 91,
+  ENTER: 13,
 };
 
 const KEY_UP = [KEY.UP, KEY.W, KEY.Z, KEY.SPACE];
@@ -59,12 +59,19 @@ function startGame() {
   gameStarted = true;
 }
 
+const testRnd = new Random(42);
+
 function keyup({ keyCode: code }) {
+  if (KEY_ACTION.includes(code)) {
+    console.log(testRnd.nextInt());
+  }
+
   if (metaPressed) {
     if (META_KEY.includes(code)) {
       metaPressed = false;
+      return;
     }
-  } else if (code === KEY.R) {
+  } else if (code === KEY.ENTER) {
     startGame();
   } else if (gameStarted) {
     if (KEY_UP.includes(code) || KEY_DOWN.includes(code)) {

@@ -37,7 +37,6 @@ const KEY_DOWN = [KEY.DOWN, KEY.S];
 const KEY_LEFT = [KEY.LEFT, KEY.A, KEY.Q];
 const KEY_RIGHT = [KEY.RIGHT, KEY.D];
 const KEY_ACTION = [KEY.E];
-const META_KEY = [KEY.META, KEY.CTRL];
 
 function updateGameArea() {
   if (player.isDead()) {
@@ -63,14 +62,10 @@ function startGame() {
 }
 
 function keyup({ keyCode: code }) {
-  if (metaPressed) {
-    if (META_KEY.includes(code)) {
-      metaPressed = false;
-      return;
-    }
-  } else if (code === KEY.ENTER) {
+  if (code === KEY.ENTER) {
     startGame();
-  } else if (gameStarted) {
+  }
+  if (gameStarted) {
     if (KEY_UP.includes(code) || KEY_DOWN.includes(code)) {
       player.move(undefined, 0);
     } else if (KEY_LEFT.includes(code) || KEY_RIGHT.includes(code)) {
@@ -80,10 +75,6 @@ function keyup({ keyCode: code }) {
 }
 
 function keydown({ keyCode: code }) {
-  if (META_KEY.includes(code)) {
-    metaPressed = true;
-    return;
-  }
   if (gameStarted) {
     if (KEY_UP.includes(code)) {
       player.move(undefined, -5);

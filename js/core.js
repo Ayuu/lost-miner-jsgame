@@ -2,6 +2,7 @@ const MAX_HEIGHT = 490;
 const MAX_WIDTH = 600;
 
 var container;
+var maze;
 var player;
 var score;
 var metaPressed = false;
@@ -52,6 +53,8 @@ function updateGameArea() {
   permanentWall.forEach(wall => { wall.update() });
   player.newPos(permanentWall);
   player.update();
+
+  maze.paint();
 }
 
 function startGame() {
@@ -59,13 +62,7 @@ function startGame() {
   gameStarted = true;
 }
 
-const testRnd = new Random(42);
-
 function keyup({ keyCode: code }) {
-  if (KEY_ACTION.includes(code)) {
-    console.log(testRnd.nextInt());
-  }
-
   if (metaPressed) {
     if (META_KEY.includes(code)) {
       metaPressed = false;
@@ -127,6 +124,7 @@ document.addEventListener("DOMContentLoaded", function () {
       this.frameNo = 0;
       this.canvas.width = MAX_WIDTH;
       this.canvas.height = MAX_HEIGHT;
+      maze = new MazeGenerator(1, 1, 18, 13, container);
       player = new Player({ container, color: 'red' });
       score = new TextComponent({
         size: '30px',
@@ -141,6 +139,7 @@ document.addEventListener("DOMContentLoaded", function () {
         y: MAX_HEIGHT - 40,
         container,
       }));
+      maze.startGenerate();
 
       this.interval = setInterval(updateGameArea, 20);
     },

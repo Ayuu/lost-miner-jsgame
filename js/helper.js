@@ -12,6 +12,10 @@ class Random {
     this.state = seed ? seed : Math.floor(Math.random() * (this.m - 1));
   }
 
+  next() {
+    return this.nextInt() / (this.m - 1);
+  }
+
   nextInt() {
     this.state = (this.a * this.state + this.c) % this.m;
     return this.state;

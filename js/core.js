@@ -1,14 +1,19 @@
 const MAX_HEIGHT = 490;
 const MAX_WIDTH = 600;
+const MAX_PROGRESS = 12;
 
 var container;
 var maze;
 var player;
-var score;
+var time;
+var progress;
 var metaPressed = false;
 var gameStarted = false;
 var gameOver = false;
 const permanentWall = [];
+const ores = [];
+const freeWalk = [];
+const difficulty = new Difficulty();
 
 const KEY = {
   Z: 90,
@@ -46,14 +51,17 @@ function updateGameArea() {
   container.clear();
   container.frameNo += 1;
 
-  score.text = `SCORE: ${container.frameNo}`;
-  score.update();
+  time.text = `Time elapsed: ${Math.floor(container.frameNo / 50)}`;
+  time.update();
 
-  permanentWall.forEach(wall => { wall.update() });
-  player.newPos(permanentWall);
-  player.update();
+  progress.text = `${player.progress === MAX_PROGRESS ? 'Last level' : `Level: ${player.progress + 1}`}`;
+  progress.update();
 
+  permanentWall.forEach(wall => wall.update());
+  ores.forEach(ore => ore.update());
   maze.paint();
+  player.newPos(permanentWall, ores);
+  player.update();
 }
 
 function startGame() {
@@ -70,6 +78,8 @@ function keyup({ keyCode: code }) {
       player.move(undefined, 0);
     } else if (KEY_LEFT.includes(code) || KEY_RIGHT.includes(code)) {
       player.move(0);
+    } else if (KEY_ACTION.includes(code)) {
+      player.action();
     }
   }
 }
@@ -103,6 +113,41 @@ function generateWall(container) {
   });
 }
 
+function generateLevel() {
+  const height = 30;
+  const width = 30;
+  permanentWall.length = 0;
+  ores.length = 0;
+  freeWalk.length = 0;
+
+  maze.startGenerate(new Difficulty(player ? player.progress : 0));
+  console.log(maze.map);
+  maze.map.forEach(({ x, y, type }) => {
+    switch(type) {
+      case TILE_TYPE.WALL:
+        permanentWall.push(new WallComponent({
+          width, height,
+          x: x * width,
+          y: y * height,
+          container,
+        }));
+        break;
+      case TILE_TYPE.ORE:
+        ores.push(new OreComponent({
+          width, height,
+          x: x * width,
+          y: y * height,
+          container,
+        }));
+        break;
+      case TILE_TYPE.EMPTY:
+        freeWalk.push({ x, y });
+        break;
+    }
+  });
+  player = new Player({ container, color: 'red', ...freeWalk[random.nextRange(0, freeWalk.length)] });
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   window.addEventListener('keydown', keydown, false);
   window.addEventListener('keyup', keyup, false);
@@ -115,23 +160,25 @@ document.addEventListener("DOMContentLoaded", function () {
       this.frameNo = 0;
       this.canvas.width = MAX_WIDTH;
       this.canvas.height = MAX_HEIGHT;
-      maze = new MazeGenerator(1, 1, 18, 13, container);
-      player = new Player({ container, color: 'red' });
-      score = new TextComponent({
+      time = new TextComponent({
         size: '30px',
         x: 10, y: MAX_HEIGHT - 10,
         container,
       });
-      generateWall(container);
+      progress = new TextComponent({
+        size: '30px',
+        x: MAX_WIDTH - 120, y: MAX_HEIGHT - 10,
+        container,
+      });
       permanentWall.push(new ObjectComponent({
-        width: 600,
+        width: MAX_WIDTH * 2,
         height: 2,
-        x: 0,
+        x: -MAX_WIDTH / 2,
         y: MAX_HEIGHT - 40,
         container,
       }));
-      maze.startGenerate();
-
+      maze = new MazeGenerator(0, 0, 20, 15, container);
+      generateLevel();
       this.interval = setInterval(updateGameArea, 20);
     },
     clear: function () {

@@ -1,21 +1,55 @@
+let map = new WeakMap();
+
+let internal = function (object) {
+  if (!map.has(object))
+      map.set(object, {});
+  return map.get(object);
+}
+
 class Player extends ObjectComponent {
   constructor(props) {
-    super({ ...props, width: 30, height: 30, x: 40, y: 120 });
-    this.speedX = 0;
-    this.speedY = 0;
+    super({ ...props, width: 30, height: 30, x: props.x * 30, y: props.y * 30 });
     this.container = props.container;
     this.dead = false;
+    this.margin = this.height * 0.1;
     this.headSize = this.height * 0.1;
     this.headMargin = this.headSize * 2;
-    this.bodySize = this.height * 0.5;
+    this.bodySize = this.height * 0.35;
     this.memberSize = this.height * 0.2;
     this.memberWidth = this.width * 0.15;
     this.updateBodyPos();
+
+    internal(this).progress = 0;
+    internal(this).dead = false;
+    internal(this).direction = DIR.LEFT;
+    internal(this).speedX = 0;
+    internal(this).speedY = 0;
   }
 
+  get progress() { return internal(this).progress; }
+
   move(x, y) {
-    this.speedX = defaults(x, this.speedX);
-    this.speedY = defaults(y, this.speedY);
+    internal(this).speedX = defaults(x, internal(this).speedX);
+    internal(this).speedY = defaults(y, internal(this).speedY);
+
+    if (Number.isFinite(x) && x !== 0) {
+      internal(this).direction = x > 0 ? DIR.RIGHT : DIR.LEFT;
+    }
+    if (Number.isFinite(y) && y !== 0) {
+      internal(this).direction = y < 0 ? DIR.TOP : DIR.BOTTOM;
+    }
+  }
+
+  action(around) {
+    console.log(around);
+  }
+
+  endLevel() {
+    internal[this].progress++;
+  }
+
+  win() {
+    return this.progress === MAX_LEVEL;
   }
 
   updateBodyPos() {
@@ -25,12 +59,13 @@ class Player extends ObjectComponent {
     this.rightX = this.centerX + this.memberWidth;
   }
 
-  newPos(walls) {
-    this.x += this.speedX;
-    this.y += this.speedY;
+  newPos(walls, objs) {
+    this.x += internal(this).speedX;
+    this.y += internal(this).speedY;
     // temporary updating body pos to check collision
     this.updateBodyPos();
     walls.forEach(wall => this.crashWith(wall));
+    objs.forEach(obj => this.crashWith(obj));
     this.hitContainer();
     // final update for body pos after collision check
     this.updateBodyPos();
@@ -64,36 +99,63 @@ class Player extends ObjectComponent {
     }
   }
 
-  isDead() { return this.dead; }
+  isDead() { return internal(this).dead; }
 
   update() {
-    this.ctx.strokeStyle = "#000"; // blue
-    this.ctx.fillStyle = "#000"; // #ffe4c4
+    this.ctx.strokeStyle = "#000";
+    this.ctx.fillStyle = "#000";
 
     this.ctx.beginPath();
-    this.ctx.arc(this.centerX, this.y + this.headSize, this.headSize, 0, Math.PI * 2, true);
+    this.ctx.arc(this.centerX, this.y + this.margin + this.headSize, this.headSize, 0, Math.PI * 2, true);
     this.ctx.fill();
 
     // body
     this.ctx.beginPath();
-    this.ctx.moveTo(this.centerX, this.y + this.headMargin);
-    this.ctx.lineTo(this.centerX, this.y + this.headMargin + this.bodySize);
+    this.ctx.moveTo(this.centerX, this.y + this.margin + this.headMargin);
+    this.ctx.lineTo(this.centerX, this.y + this.margin + this.headMargin + this.bodySize);
     this.ctx.stroke();
 
     // arms
     this.ctx.beginPath();
-    this.ctx.moveTo(this.centerX, this.y + this.headMargin);
-    this.ctx.lineTo(this.leftX, this.y + this.headMargin + this.memberSize);
-    this.ctx.moveTo(this.centerX, this.y + this.headMargin);
-    this.ctx.lineTo(this.rightX, this.y + this.headMargin + this.memberSize);
+    this.ctx.moveTo(this.centerX, this.y + this.margin + this.headMargin);
+    this.ctx.lineTo(this.leftX, this.y + this.margin + this.headMargin + this.memberSize);
+    this.ctx.moveTo(this.centerX, this.y + this.margin + this.headMargin);
+    this.ctx.lineTo(this.rightX, this.y + this.margin + this.headMargin + this.memberSize);
     this.ctx.stroke();
 
     // legs
     this.ctx.beginPath();
-    this.ctx.moveTo(this.centerX, this.y + this.headMargin + this.bodySize);
+    this.ctx.moveTo(this.centerX, this.y + this.margin + this.headMargin + this.bodySize);
     this.ctx.lineTo(this.leftX, this.y + this.height);
-    this.ctx.moveTo(this.centerX, this.y + this.headMargin + this.bodySize);
+    this.ctx.moveTo(this.centerX, this.y + this.margin + this.headMargin + this.bodySize);
     this.ctx.lineTo(this.rightX, this.y + this.height);
     this.ctx.stroke();
+
+    // arrow
+    this.ctx.strokeStyle = "#000"; // blue
+    this.ctx.fillStyle = "red";
+    switch(internal(this).direction) {
+      case DIR.LEFT:
+        this.ctx.moveTo(this.x, this.centerY);
+        this.ctx.lineTo(this.x + 5, this.centerY + 5);
+        this.ctx.lineTo(this.x + 5, this.centerY - 5);
+        break;
+      case DIR.RIGHT:
+        this.ctx.moveTo(this.x + this.width, this.centerY);
+        this.ctx.lineTo(this.x + this.width - 5, this.centerY + 5);
+        this.ctx.lineTo(this.x + this.width - 5, this.centerY - 5);
+        break;
+      case DIR.TOP:
+        this.ctx.moveTo(this.centerX, this.y);
+        this.ctx.lineTo(this.centerX - 5, this.y + 5);
+        this.ctx.lineTo(this.centerX + 5, this.y + 5);
+        break;
+      case DIR.BOTTOM:
+        this.ctx.moveTo(this.centerX, this.y + this.height);
+        this.ctx.lineTo(this.centerX - 5, this.y + this.height - 5);
+        this.ctx.lineTo(this.centerX + 5, this.y + this.height - 5);
+        break;
+    }
+    this.ctx.fill();
   }
 }

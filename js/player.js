@@ -130,10 +130,15 @@ class Player extends ObjectComponent {
     this.ctx.fill();
 
     this.ctx.beginPath();
+    this.ctx.lineWidth = 3;
     this.ctx.moveTo(this.centerX, this.y + this.margin + this.headMargin);
+    this.ctx.lineTo(this.centerX, this.y + this.margin + this.headMargin + this.bodySize);
+    this.ctx.moveTo(this.centerX, this.y + this.margin + this.headMargin + this.bodySize / 2);
+    this.ctx.strokeStyle = "#FFF";
     this.ctx.lineTo(this.centerX, this.y + this.margin + this.headMargin + this.bodySize);
     this.ctx.stroke();
 
+    this.ctx.strokeStyle = "#000";
     this.ctx.beginPath();
     this.ctx.moveTo(this.centerX, this.y + this.margin + this.headMargin);
     this.ctx.lineTo(this.leftX, this.y + this.margin + this.headMargin + this.memberSize);
@@ -148,6 +153,7 @@ class Player extends ObjectComponent {
     this.ctx.lineTo(this.rightX, this.y + this.height);
     this.ctx.stroke();
 
+    this.ctx.lineWidth = 1;
     // arrow
     this.ctx.strokeStyle = "#000";
     this.ctx.fillStyle = "red";

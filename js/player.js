@@ -1,6 +1,6 @@
 class Player extends ObjectComponent {
   constructor(props) {
-    super({ ...props, width: 30, height: 30, x: props.x, y: props.y });
+    super(props);
     this.container = props.container;
     this.dead = false;
     this.margin = this.height * 0.1;

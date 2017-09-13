@@ -53,6 +53,7 @@ function updateGameArea() {
 
   if (player.isDead() || player.progress > MAX_PROGRESS) {
     gameOver = true;
+    gameStarted = false;
     return;
   }
   time.text = `Time elapsed: ${Math.floor(container.frameNo / 50)}`;
@@ -102,7 +103,7 @@ function keyup({ keyCode: code }) {
           }
           if (idx > -1) {
             if (random.next() < 0.05 || ores.length === 1) {
-              map[tile.x + tile.y * mapWidth] = { ...map[x + y * mapWidth], type: TILE_TYPE.EXIT };
+              map[tile.x + tile.y * mapWidth] = Object.assign({}, map[x + y * mapWidth], { type: TILE_TYPE.EXIT });
               exit.push(new StarComponent({
                 width: TILE_WIDTH, height: TILE_HEIGHT,
                 x, y,
@@ -163,7 +164,7 @@ function generateLevel() {
   });
   const start = freeWalk[random.nextRange(0, freeWalk.length)];
   if (!player) {
-    player = new Player({ container, color: 'red', ...start });
+    player = new Player({ container, color: 'red', x: start.x, y: start.y, width: TILE_WIDTH, height: TILE_HEIGHT });
   } else {
     player.setPosition(start);
   }
@@ -172,6 +173,7 @@ function generateLevel() {
 document.addEventListener("DOMContentLoaded", function () {
   window.addEventListener('keydown', keydown, false);
   window.addEventListener('keyup', keyup, false);
+
   container = {
     canvas: document.getElementById("container"),
     start: function () {

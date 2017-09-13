@@ -68,7 +68,6 @@ class MazeGenerator {
   }
 
   startGenerate(difficulty) {
-    console.log(difficulty);
     var split;
     this.map.length = 0;
     do {

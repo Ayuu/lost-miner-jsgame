@@ -69,7 +69,7 @@ function updateGameArea() {
   var isEnd = player.newPos(permanentWall, ores, exit);
   if (isEnd) {
     player.endLevel();
-    sound.win.play();
+    sounds.win.play();
     generateLevel();
   }
   player.update();

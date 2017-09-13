@@ -6,7 +6,6 @@ class WallComponent extends ObjectComponent {
   update() {
     this.ctx.strokeStyle = '#000';
     this.ctx.fillStyle = '#C0C0C0';
-    // this.ctx.fillRect(this.x, this.y, this.width, this.height);
     this.ctx.beginPath();
     this.ctx.moveTo(this.x, this.y);
     this.ctx.lineTo(this.x + this.width, this.y);

@@ -1,6 +1,6 @@
 const MAX_HEIGHT = 490;
 const MAX_WIDTH = 600;
-const MAX_PROGRESS = 12;
+const MAX_PROGRESS = 11; // start at 0, end after the 12 lvl
 
 const mapWidth = 20;
 const TILE_HEIGHT = 30;
@@ -9,12 +9,14 @@ const TILE_WIDTH = 30;
 var container;
 var maze;
 var player;
+var difficulty;
 var time;
 var progress;
-var metaPressed = false;
+var splashText;
+var pressEnter;
 var gameStarted = false;
-var gameOver = false;
-const permanentWall = [];
+var gamePause = false;
+const walls = [];
 const ores = [];
 const exit = [];
 const freeWalk = [];
@@ -31,7 +33,6 @@ const KEY = {
   UP: 38,
   RIGHT: 39,
   DOWN: 40,
-  SPACE: 32,
   CTRL: 17,
   SHIFT: 16,
   ALT: 18,
@@ -42,78 +43,82 @@ const KEY = {
   ENTER: 13,
 };
 
-const KEY_UP = [KEY.UP, KEY.W, KEY.Z, KEY.SPACE];
+const KEY_UP = [KEY.UP, KEY.W, KEY.Z];
 const KEY_DOWN = [KEY.DOWN, KEY.S];
 const KEY_LEFT = [KEY.LEFT, KEY.A, KEY.Q];
 const KEY_RIGHT = [KEY.RIGHT, KEY.D];
 const KEY_ACTION = [KEY.E];
 
 function updateGameArea() {
+  if (!gameStarted || gamePause) return;
   container.clear();
   container.frameNo += 1;
 
-  if (player.isDead() || player.progress > MAX_PROGRESS) {
-    gameOver = true;
-    gameStarted = false;
-    return;
-  }
   time.text = `Time elapsed: ${Math.floor(container.frameNo / 50)}`;
   time.update();
 
   progress.text = `${player.progress === MAX_PROGRESS ? 'Last level' : `Level: ${player.progress + 1}`}`;
   progress.update();
 
-  permanentWall.forEach(wall => wall.update());
+  walls.forEach(wall => wall.update());
   ores.forEach(ore => ore.update());
   exit.forEach(e => e.update());
-  var isEnd = player.newPos(permanentWall, ores, exit);
+  var isEnd = player.newPos(walls, ores, exit);
   if (isEnd) {
-    player.endLevel();
+    var inc = isEnd.type === TILE_TYPE.HOLE ? -1 : 1;
+    player.endLevel(inc);
     sounds.win.play();
-    generateLevel();
+    gamePause = true;
+    container.clear();
+    if (player.progress >= MAX_PROGRESS) {
+      gameStarted = false;
+      splashText.text = `Congratulation! You made your way out!`;
+      pressEnter.text = `Press Enter to restart the game!`;
+      container.frameNo = 0;
+    } else {
+      splashText.text = inc > 0 ? `Good job!` : 'Boo, try again.';
+      pressEnter.text = `Press Enter to start next level (${player.progress + 1})!`;
+    }
+    splashText.update();
+    pressEnter.update();
+    return;
   }
   player.update();
 }
 
-function startGame() {
-  container.start();
-  gameStarted = true;
-}
-
 function keyup({ keyCode: code }) {
+  // adding some randomness to the game otherwise it's too easy
+  const rng = random.next();
   if (code === KEY.ENTER) {
-    startGame();
+    generateLevel(gameStarted === false);
   }
   if (gameStarted) {
     if (KEY_UP.includes(code) || KEY_DOWN.includes(code)) {
-      player.move(undefined, 0);
+      player.move(null, 0);
     } else if (KEY_LEFT.includes(code) || KEY_RIGHT.includes(code)) {
       player.move(0);
     } else if (KEY_ACTION.includes(code)) {
       const tile = player.action(maze.map, mapWidth);
       if (tile) {
         if (tile.type === TILE_TYPE.ORE) {
-          var idx = -1;
           const x = tile.x * TILE_WIDTH;
           const y = tile.y * TILE_HEIGHT;
           for(var i = 0; i < ores.length; i++) {
             const ore = ores[i];
             if (ore.x === x && ore.y === y) {
-              idx = i;
+              if (rng < 0.05 || ores.length === 1) {
+                const type = rng > (0.025 * difficulty.getLootChance() / 100) || ores.length === 1 ? TILE_TYPE.EXIT : TILE_TYPE.HOLE;
+                const key = tile.x + tile.y * mapWidth;
+                map[key] = Object.assign({}, map[key], { type });
+                exit.push(new StarComponent({
+                  container, width: TILE_WIDTH, height: TILE_HEIGHT,
+                  x, y, type,
+                }));
+              }
+              sounds.mine.play();
+              ores.splice(i, 1);
               break;
             }
-          }
-          if (idx > -1) {
-            if (random.next() < 0.05 || ores.length === 1) {
-              map[tile.x + tile.y * mapWidth] = Object.assign({}, map[x + y * mapWidth], { type: TILE_TYPE.EXIT });
-              exit.push(new StarComponent({
-                width: TILE_WIDTH, height: TILE_HEIGHT,
-                x, y,
-                container,
-              }));
-            }
-            sounds.mine.play();
-            ores.splice(idx, 1);
           }
         }
       }
@@ -124,9 +129,9 @@ function keyup({ keyCode: code }) {
 function keydown({ keyCode: code }) {
   if (gameStarted) {
     if (KEY_UP.includes(code)) {
-      player.move(undefined, -5);
+      player.move(null, -5);
     } else if (KEY_DOWN.includes(code)) {
-      player.move(undefined, 5);
+      player.move(null, 5);
     } else if (KEY_LEFT.includes(code)) {
       player.move(-5);
     } else if (KEY_RIGHT.includes(code)) {
@@ -135,17 +140,14 @@ function keydown({ keyCode: code }) {
   }
 }
 
-function generateLevel() {
-  permanentWall.length = 0;
-  ores.length = 0;
-  freeWalk.length = 0;
-  exit.length = 0;
-
-  maze.startGenerate(new Difficulty(player ? player.progress : 0));
+function generateLevel(reset) {
+  container.reset();
+  difficulty = new Difficulty(player ? player.progress : 0);
+  maze.startGenerate();
   maze.map.forEach(({ x, y, type }) => {
     switch(type) {
       case TILE_TYPE.WALL:
-        permanentWall.push(new WallComponent({
+        walls.push(new WallComponent({
           width: TILE_WIDTH, height: TILE_HEIGHT,
           x: x * TILE_WIDTH,
           y: y * TILE_HEIGHT,
@@ -165,12 +167,17 @@ function generateLevel() {
         break;
     }
   });
+
   const start = freeWalk[random.nextRange(0, freeWalk.length)];
   if (!player) {
-    player = new Player({ container, color: 'red', x: start.x, y: start.y, width: TILE_WIDTH, height: TILE_HEIGHT });
+    player = new Player(Object.assign({}, { container, width: TILE_WIDTH, height: TILE_HEIGHT }, start));
   } else {
+    reset && player.reset();
     player.setPosition(start);
   }
+  container.interval = setInterval(updateGameArea, 20);
+  gamePause = false;
+  gameStarted = true;
 }
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -179,48 +186,68 @@ document.addEventListener("DOMContentLoaded", function () {
 
   container = {
     canvas: document.getElementById("container"),
-    start: function () {
+    start() {
       container = this;
       this.reset();
       this.context = this.canvas.getContext("2d");
       this.frameNo = 0;
       this.canvas.width = MAX_WIDTH;
       this.canvas.height = MAX_HEIGHT;
+
       time = new TextComponent({
-        size: '30px',
+        size: '18px',
         x: 10, y: MAX_HEIGHT - 10,
         container,
       });
       progress = new TextComponent({
-        size: '30px',
-        x: MAX_WIDTH - 120, y: MAX_HEIGHT - 10,
+        size: '18px',
+        x: MAX_WIDTH - 100, y: MAX_HEIGHT - 10,
         container,
       });
-      permanentWall.push(new ObjectComponent({
+      pressEnter = new TextComponent({
+        size: '18px',
+        x: 90, y: MAX_HEIGHT / 2 + 50,
+        container,
+      });
+      splashText = new TextComponent({
+        size: '18px',
+        x: 30, y: MAX_HEIGHT / 2,
+        container,
+      });
+      walls.push(new ObjectComponent({
         width: MAX_WIDTH * 2,
         height: 2,
         x: -MAX_WIDTH / 2,
         y: MAX_HEIGHT - 40,
         container,
       }));
+
       maze = new MazeGenerator(0, 0, mapWidth, 15, container);
-      sounds.mine = new Audio('assets/mine.ogg');
-      sounds.win = new Audio('assets/win.ogg');
-      generateLevel();
-      this.interval = setInterval(updateGameArea, 20);
+      sounds.mine = new Audio('assets/mine.wav');
+      sounds.win = new Audio('assets/win.wav');
+      splashText.text = `You are a romantic panda that is trying to find a crystal for your lover.`;
+      splashText.update();
+      splashText.x = 90;
+      pressEnter.text = `Press Enter to start the game!`;
+      pressEnter.update();
+      gamePause = true;
     },
-    clear: function () {
+    clear() {
       if (this.context) {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
       }
     },
-    reset: function () {
+    reset() {
       this.clear();
       if (this.interval) {
         clearInterval(this.interval);
-        gameOver = false;
+        gameStarted = false;
       }
-      permanentWall.length = 0;
+      walls.length = 0;
+      ores.length = 0;
+      freeWalk.length = 0;
+      exit.length = 0;
     }
-  }
+  }; 
+  container.start();
 });

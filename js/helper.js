@@ -12,28 +12,9 @@ function hexToRgba(hex, a) {
 }
 
 function tileComparator(r1, r2) {
-  if (r1.x < r2.x) {
-    if (r1.y < r2.y) {
-      return -4;
-    } else if (r1.y === r2.y) {
-      return -3;
-    }
-    return -2;
-  } else if (r1.x === r2.x) {
-    if (r1.y < r2.y) {
-      return -1;
-    } else if (r1.y === r2.y) {
-      return 0;
-    }
-    return 1;
-  } else {
-    if (r1.y < r2.y) {
-      return 2;
-    } else if (r1.y === r2.y) {
-      return 3;
-    }
-    return 4;
-  }
+  return (r1.x < r2.x) ? (r1.y < r2.y) ? -4 : ((r1.y === r2.y) ? -3 : -2) :
+    (r1.x === r2.x) ? (r1.y < r2.y) ? -1 : ((r1.y === r2.y) ? 0 : 1) :
+    (r1.y < r2.y) ? 2 : ((r1.y === r2.y) ? 3 : 4);
 }
 
 class Random {
@@ -66,7 +47,7 @@ let map = new WeakMap();
 
 let internal = function (object) {
   if (!map.has(object))
-      map.set(object, {});
+    map.set(object, {});
   return map.get(object);
 }
 
@@ -82,4 +63,5 @@ const TILE_TYPE = {
   WALL: 'WALL',
   ORE: 'ORE',
   EXIT: 'EXIT',
+  HOLE: 'HOLE',
 };

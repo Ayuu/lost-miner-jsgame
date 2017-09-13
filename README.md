@@ -1,4 +1,3 @@
 # lost-miner-jsgame
-A miner fell into a hole...
-
-The player will need to mine ores to find it ways up!
+You are a panda miner that tried to be romantic by find a rare gem for your lover.
+Sadly you got lost! Try to get out... and in the same time... find a gem for your lover

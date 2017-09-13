@@ -1,12 +1,13 @@
 class StarComponent extends ObjectComponent {
-  constructor(props, color, sides) {
+  constructor(props) {
     super(props);
-    this.color = props.color || '#D4AF37';
+    this.color = props.type === TILE_TYPE.HOLE ? '#686868' : '#D4AF37';
     this.sides = props.sides || 8;
     this.halfWidth *= 0.8;
     this.halfHeight *= 0.8;
     this.quarterWidth = this.halfWidth * 0.75;
     this.quarterHeight = this.halfHeight * 0.75;
+    this.type = props.type;
   }
 
   update() {

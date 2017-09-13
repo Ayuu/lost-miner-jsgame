@@ -42,7 +42,7 @@ class Leaf {
     this.room = null;
   }
 
-  generateCoords(difficulty, map, mapWidth) {
+  generateCoords(map, mapWidth) {
     for (var x = this.x; x < (this.x + this.width); x++) {
       for (var y = this.y; y < (this.y + this.height); y++) {
         if (this.room.x <= x && x < this.room.sizeX
@@ -67,7 +67,7 @@ class MazeGenerator {
     this.height = height;
   }
 
-  startGenerate(difficulty) {
+  startGenerate() {
     var split;
     this.map.length = 0;
     do {
@@ -107,10 +107,10 @@ class MazeGenerator {
     } while (split);
 
     this.leaves.sort(tileComparator);
-    this.createRooms(difficulty);
+    this.createRooms();
   }
 
-  createRooms(difficulty) {
+  createRooms() {
     this.leaves.forEach(leaf => {
       const width = Math.max(1, Math.floor(random.nextRange(1, 100) / 100 * leaf.width));
       const height = Math.max(1, Math.floor(random.nextRange(1, 100) / 100 * leaf.height));
@@ -121,7 +121,7 @@ class MazeGenerator {
         y: random.nextRange(leaf.y, leaf.y + (leaf.height - height)),
       });
       leaf.room.createPath(leaf.x, leaf.y, leaf.width, leaf.height, leaf.directions);
-      leaf.generateCoords(difficulty, this.map, this.width);
+      leaf.generateCoords(this.map, this.width);
     });
   }
 

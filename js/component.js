@@ -49,7 +49,7 @@ class TextComponent extends AbstractComponent {
   }
 
   update() {
-    this.ctx.font = `${this.size} Arial`;
+    this.ctx.font = this.size + ' Arial';
     this.ctx.fillStyle = this.color;
     this.ctx.fillText(this.text, this.x, this.y);
   }

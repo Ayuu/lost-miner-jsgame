@@ -2,7 +2,6 @@ class Player extends ObjectComponent {
   constructor(props) {
     super(props);
     this.container = props.container;
-    this.dead = false;
     this.margin = this.height * 0.1;
     this.headSize = this.height * 0.1;
     this.headMargin = this.headSize * 2;
@@ -10,17 +9,20 @@ class Player extends ObjectComponent {
     this.memberSize = this.height * 0.2;
     this.memberWidth = this.width * 0.15;
 
-    internal(this).progress = 0;
-    internal(this).dead = false;
-    this.setPosition(props)
+    this.setPosition(props);
+    this.reset();
   }
 
   get progress() { return internal(this).progress; }
   set progress(x) { internal(this).progress = x; }
 
+  reset() {
+    internal(this).progress = 0;
+  }
+
   setPosition({ x, y }) {
-    this.x = x * 30;
-    this.y = y * 30;
+    this.x = x * this.width;
+    this.y = y * this.height;
     internal(this).direction = DIR.LEFT;
     internal(this).speedX = 0;
     internal(this).speedY = 0;
@@ -41,8 +43,8 @@ class Player extends ObjectComponent {
 
   action(map, mapWidth) {
     var tile;
-    var x = Math.floor(this.x / 30);
-    var y = Math.floor(this.y / 30);
+    var x = Math.round(this.x / this.width);
+    var y = Math.round(this.y / this.height);
     switch(internal(this).direction) {
       case DIR.LEFT:
         tile = map[x - 1 + y * mapWidth];
@@ -57,16 +59,11 @@ class Player extends ObjectComponent {
         tile = map[x + (y + 1) * mapWidth];
         break;
     }
-
     return tile && tile.type === TILE_TYPE.ORE ? tile : null;
   }
 
-  endLevel() {
-    internal(this).progress = internal(this).progress + 1;
-  }
-
-  win() {
-    return internal(this).progress === MAX_LEVEL;
+  endLevel(progress) {
+    internal(this).progress += progress;
   }
 
   updateBodyPos() {
@@ -77,6 +74,7 @@ class Player extends ObjectComponent {
   }
 
   newPos(walls, objs, exits) {
+    var e;
     this.x += internal(this).speedX;
     this.y += internal(this).speedY;
     // temporary updating body pos to check collision
@@ -84,15 +82,13 @@ class Player extends ObjectComponent {
     walls.forEach(wall => this.crashWith(wall));
     objs.forEach(obj => this.crashWith(obj));
     this.hitContainer();
-    for (var i = 0; i <= exits.length; i++) {
-      const e = exits[i];
-      if (e && this.crashWith(e)) {
-        return e;
-      }
-    };
+    for (var i = 0; i < exits.length; i++) {
+      e = exits[i];
+      if (e && this.crashWith(e)) break;
+    }
     // final update for body pos after collision check
     this.updateBodyPos();
-    return null;
+    return e;
   }
 
   hitContainer() {
@@ -125,8 +121,6 @@ class Player extends ObjectComponent {
     return false;
   }
 
-  isDead() { return internal(this).dead; }
-
   update() {
     this.ctx.strokeStyle = "#000";
     this.ctx.fillStyle = "#000";
@@ -135,13 +129,11 @@ class Player extends ObjectComponent {
     this.ctx.arc(this.centerX, this.y + this.margin + this.headSize, this.headSize, 0, Math.PI * 2, true);
     this.ctx.fill();
 
-    // body
     this.ctx.beginPath();
     this.ctx.moveTo(this.centerX, this.y + this.margin + this.headMargin);
     this.ctx.lineTo(this.centerX, this.y + this.margin + this.headMargin + this.bodySize);
     this.ctx.stroke();
 
-    // arms
     this.ctx.beginPath();
     this.ctx.moveTo(this.centerX, this.y + this.margin + this.headMargin);
     this.ctx.lineTo(this.leftX, this.y + this.margin + this.headMargin + this.memberSize);
@@ -149,7 +141,6 @@ class Player extends ObjectComponent {
     this.ctx.lineTo(this.rightX, this.y + this.margin + this.headMargin + this.memberSize);
     this.ctx.stroke();
 
-    // legs
     this.ctx.beginPath();
     this.ctx.moveTo(this.centerX, this.y + this.margin + this.headMargin + this.bodySize);
     this.ctx.lineTo(this.leftX, this.y + this.height);
@@ -158,7 +149,7 @@ class Player extends ObjectComponent {
     this.ctx.stroke();
 
     // arrow
-    this.ctx.strokeStyle = "#000"; // blue
+    this.ctx.strokeStyle = "#000";
     this.ctx.fillStyle = "red";
     switch(internal(this).direction) {
       case DIR.LEFT:

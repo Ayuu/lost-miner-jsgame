@@ -62,7 +62,15 @@ class Random {
   }
 }
 
-const random = new Random(21);
+let map = new WeakMap();
+
+let internal = function (object) {
+  if (!map.has(object))
+      map.set(object, {});
+  return map.get(object);
+}
+
+const random = new Random(42);
 const DIR = {
   LEFT: 'LEFT',
   RIGHT: 'RIGHT',

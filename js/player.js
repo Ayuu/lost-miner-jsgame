@@ -1,14 +1,6 @@
-let map = new WeakMap();
-
-let internal = function (object) {
-  if (!map.has(object))
-      map.set(object, {});
-  return map.get(object);
-}
-
 class Player extends ObjectComponent {
   constructor(props) {
-    super({ ...props, width: 30, height: 30, x: props.x * 30, y: props.y * 30 });
+    super({ ...props, width: 30, height: 30, x: props.x, y: props.y });
     this.container = props.container;
     this.dead = false;
     this.margin = this.height * 0.1;
@@ -17,16 +9,23 @@ class Player extends ObjectComponent {
     this.bodySize = this.height * 0.35;
     this.memberSize = this.height * 0.2;
     this.memberWidth = this.width * 0.15;
-    this.updateBodyPos();
 
     internal(this).progress = 0;
     internal(this).dead = false;
-    internal(this).direction = DIR.LEFT;
-    internal(this).speedX = 0;
-    internal(this).speedY = 0;
+    this.setPosition(props)
   }
 
   get progress() { return internal(this).progress; }
+  set progress(x) { internal(this).progress = x; }
+
+  setPosition({ x, y }) {
+    this.x = x * 30;
+    this.y = y * 30;
+    internal(this).direction = DIR.LEFT;
+    internal(this).speedX = 0;
+    internal(this).speedY = 0;
+    this.updateBodyPos();
+  }
 
   move(x, y) {
     internal(this).speedX = defaults(x, internal(this).speedX);
@@ -40,16 +39,34 @@ class Player extends ObjectComponent {
     }
   }
 
-  action(around) {
-    console.log(around);
+  action(map, mapWidth) {
+    var tile;
+    var x = Math.floor(this.x / 30);
+    var y = Math.floor(this.y / 30);
+    switch(internal(this).direction) {
+      case DIR.LEFT:
+        tile = map[x - 1 + y * mapWidth];
+        break;
+      case DIR.RIGHT:
+        tile = map[x + 1 + y * mapWidth];
+        break;
+      case DIR.TOP:
+        tile = map[x + (y - 1) * mapWidth];
+        break;
+      case DIR.BOTTOM:
+        tile = map[x + (y + 1) * mapWidth];
+        break;
+    }
+
+    return tile && tile.type === TILE_TYPE.ORE ? tile : null;
   }
 
   endLevel() {
-    internal[this].progress++;
+    internal(this).progress = internal(this).progress + 1;
   }
 
   win() {
-    return this.progress === MAX_LEVEL;
+    return internal(this).progress === MAX_LEVEL;
   }
 
   updateBodyPos() {
@@ -59,7 +76,7 @@ class Player extends ObjectComponent {
     this.rightX = this.centerX + this.memberWidth;
   }
 
-  newPos(walls, objs) {
+  newPos(walls, objs, exits) {
     this.x += internal(this).speedX;
     this.y += internal(this).speedY;
     // temporary updating body pos to check collision
@@ -67,8 +84,15 @@ class Player extends ObjectComponent {
     walls.forEach(wall => this.crashWith(wall));
     objs.forEach(obj => this.crashWith(obj));
     this.hitContainer();
+    for (var i = 0; i <= exits.length; i++) {
+      const e = exits[i];
+      if (e && this.crashWith(e)) {
+        return e;
+      }
+    };
     // final update for body pos after collision check
     this.updateBodyPos();
+    return null;
   }
 
   hitContainer() {
@@ -96,7 +120,9 @@ class Player extends ObjectComponent {
         if (wy > -hx) this.x = o.x + o.width;
         else this.y = o.y - this.height;
       }
+      return true;
     }
+    return false;
   }
 
   isDead() { return internal(this).dead; }

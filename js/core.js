@@ -2,6 +2,10 @@ const MAX_HEIGHT = 490;
 const MAX_WIDTH = 600;
 const MAX_PROGRESS = 12;
 
+const mapWidth = 20;
+const TILE_HEIGHT = 30;
+const TILE_WIDTH = 30;
+
 var container;
 var maze;
 var player;
@@ -12,8 +16,8 @@ var gameStarted = false;
 var gameOver = false;
 const permanentWall = [];
 const ores = [];
+const exit = [];
 const freeWalk = [];
-const difficulty = new Difficulty();
 
 const KEY = {
   Z: 90,
@@ -44,13 +48,13 @@ const KEY_RIGHT = [KEY.RIGHT, KEY.D];
 const KEY_ACTION = [KEY.E];
 
 function updateGameArea() {
-  if (player.isDead()) {
-    gameOver = true;
-    return;
-  }
   container.clear();
   container.frameNo += 1;
 
+  if (player.isDead() || player.progress > MAX_PROGRESS) {
+    gameOver = true;
+    return;
+  }
   time.text = `Time elapsed: ${Math.floor(container.frameNo / 50)}`;
   time.update();
 
@@ -59,8 +63,12 @@ function updateGameArea() {
 
   permanentWall.forEach(wall => wall.update());
   ores.forEach(ore => ore.update());
-  maze.paint();
-  player.newPos(permanentWall, ores);
+  exit.forEach(e => e.update());
+  var isEnd = player.newPos(permanentWall, ores, exit);
+  if (isEnd) {
+    player.endLevel();
+    generateLevel();
+  }
   player.update();
 }
 
@@ -79,7 +87,32 @@ function keyup({ keyCode: code }) {
     } else if (KEY_LEFT.includes(code) || KEY_RIGHT.includes(code)) {
       player.move(0);
     } else if (KEY_ACTION.includes(code)) {
-      player.action();
+      const tile = player.action(maze.map, mapWidth);
+      if (tile) {
+        if (tile.type === TILE_TYPE.ORE) {
+          var idx = -1;
+          const x = tile.x * TILE_WIDTH;
+          const y = tile.y * TILE_HEIGHT;
+          for(var i = 0; i < ores.length; i++) {
+            const ore = ores[i];
+            if (ore.x === x && ore.y === y) {
+              idx = i;
+              break;
+            }
+          }
+          if (idx > -1) {
+            if (random.next() < 0.05 || ores.length === 1) {
+              map[tile.x + tile.y * mapWidth] = { ...map[x + y * mapWidth], type: TILE_TYPE.EXIT };
+              exit.push(new StarComponent({
+                width: TILE_WIDTH, height: TILE_HEIGHT,
+                x, y,
+                container,
+              }));
+            }
+            ores.splice(idx, 1);
+          }
+        }
+      }
     }
   }
 }
@@ -98,44 +131,28 @@ function keydown({ keyCode: code }) {
   }
 }
 
-function generateWall(container) {
-  const height = 30;
-  const width = 30;
-  const w = new Set();
-  var x, y;
-  for (x = 0, y = 0; x < 20; x++) w.add({ x, y });
-  for (x = 0, y = 14; x < 20; x++) w.add({ x, y });
-  for (x = 0, y = 0; y < 15; y++) w.add({ x, y });
-  for (x = 19, y = 0; y < 15; y++) w.add({ x, y });
-
-  w.forEach(({ x, y }) => {
-    permanentWall.push(new WallComponent({ width, height, x: 0 + x * 30, y: 0 + y * 30, container }));
-  });
-}
-
 function generateLevel() {
-  const height = 30;
-  const width = 30;
   permanentWall.length = 0;
   ores.length = 0;
   freeWalk.length = 0;
+  exit.length = 0;
 
   maze.startGenerate(new Difficulty(player ? player.progress : 0));
   maze.map.forEach(({ x, y, type }) => {
     switch(type) {
       case TILE_TYPE.WALL:
         permanentWall.push(new WallComponent({
-          width, height,
-          x: x * width,
-          y: y * height,
+          width: TILE_WIDTH, height: TILE_HEIGHT,
+          x: x * TILE_WIDTH,
+          y: y * TILE_HEIGHT,
           container,
         }));
         break;
       case TILE_TYPE.ORE:
         ores.push(new OreComponent({
-          width, height,
-          x: x * width,
-          y: y * height,
+          width: TILE_WIDTH, height: TILE_HEIGHT,
+          x: x * TILE_WIDTH,
+          y: y * TILE_HEIGHT,
           container,
         }));
         break;
@@ -144,7 +161,12 @@ function generateLevel() {
         break;
     }
   });
-  player = new Player({ container, color: 'red', ...freeWalk[random.nextRange(0, freeWalk.length)] });
+  const start = freeWalk[random.nextRange(0, freeWalk.length)];
+  if (!player) {
+    player = new Player({ container, color: 'red', ...start });
+  } else {
+    player.setPosition(start);
+  }
 }
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -176,7 +198,7 @@ document.addEventListener("DOMContentLoaded", function () {
         y: MAX_HEIGHT - 40,
         container,
       }));
-      maze = new MazeGenerator(0, 0, 20, 15, container);
+      maze = new MazeGenerator(0, 0, mapWidth, 15, container);
       generateLevel();
       this.interval = setInterval(updateGameArea, 20);
     },

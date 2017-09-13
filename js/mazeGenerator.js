@@ -48,7 +48,7 @@ class Leaf {
         if (this.room.x <= x && x < this.room.sizeX
           && this.room.y <= y && y < this.room.sizeY) {
           const rnd = random.nextRange(0, 2);
-          const type = rnd === 1 ? TILE_TYPE.ORE : (random.next() < difficulty.getWallChance() ? TILE_TYPE.WALL : TILE_TYPE.EMPTY);
+          const type = rnd === 1 ? TILE_TYPE.ORE : TILE_TYPE.EMPTY;
           map[x + y * mapWidth] = { x, y, type };
         } else {
           map[x + y * mapWidth] = { x, y, type: TILE_TYPE.WALL };
@@ -68,6 +68,7 @@ class MazeGenerator {
   }
 
   startGenerate(difficulty) {
+    console.log(difficulty);
     var split;
     this.map.length = 0;
     do {
@@ -108,7 +109,6 @@ class MazeGenerator {
 
     this.leaves.sort(tileComparator);
     this.createRooms(difficulty);
-    this.map.sort(tileComparator);
   }
 
   createRooms(difficulty) {

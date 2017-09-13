@@ -18,6 +18,7 @@ const permanentWall = [];
 const ores = [];
 const exit = [];
 const freeWalk = [];
+const sounds = {};
 
 const KEY = {
   Z: 90,
@@ -68,6 +69,7 @@ function updateGameArea() {
   var isEnd = player.newPos(permanentWall, ores, exit);
   if (isEnd) {
     player.endLevel();
+    sound.win.play();
     generateLevel();
   }
   player.update();
@@ -110,6 +112,7 @@ function keyup({ keyCode: code }) {
                 container,
               }));
             }
+            sounds.mine.play();
             ores.splice(idx, 1);
           }
         }
@@ -201,6 +204,8 @@ document.addEventListener("DOMContentLoaded", function () {
         container,
       }));
       maze = new MazeGenerator(0, 0, mapWidth, 15, container);
+      sounds.mine = new Audio('assets/mine.ogg');
+      sounds.win = new Audio('assets/win.ogg');
       generateLevel();
       this.interval = setInterval(updateGameArea, 20);
     },
